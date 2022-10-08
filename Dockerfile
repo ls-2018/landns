@@ -14,6 +14,9 @@ FROM centos:8
 
 COPY --from=builder /landns /landns
 COPY resolv.conf /etc/resolv.conf
+RUN mkdir /var/landns
 EXPOSE 53/udp
+EXPOSE 53/tcp
 EXPOSE 9353/tcp
 ENTRYPOINT ["/bin/sh","-c"]
+CMD ["/landns -v -u 114.114.114.114:53 --sqlite=/var/landns/sqlite.db"]
