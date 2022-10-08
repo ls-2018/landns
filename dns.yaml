@@ -20,7 +20,7 @@ spec:
           command:
             - "/bin/bash"
             - "-c"
-            - "/landns -v -u 114.114.114.114:53 --redis=127.0.0.1:6379 --redis-database=15"
+            - "/landns -v -u 114.114.114.114:53 --redis=127.0.0.1:6379 --redis-database=15 --sqlite=sqlite.db"
           name: mydns
         - image: redis
           name: redis
