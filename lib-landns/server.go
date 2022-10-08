@@ -77,38 +77,58 @@ func (s *Server) ListenAndServe(ctx context.Context, apiAddress *net.TCPAddr, dn
 		Handler: httpHandler,
 	}
 
-	dnsServer := dns.Server{
-		Addr:      dnsAddress.String(),
-		Net:       dnsProto,
-		ReusePort: true,
-		Handler:   s.DNSHandler(),
-	}
-
 	httpch := make(chan error)
 	dnsch := make(chan error)
 	defer close(httpch)
 	defer close(dnsch)
+
+	dnsUdpServer := dns.Server{
+		Addr:      dnsAddress.String(),
+		Net:       "udp",
+		ReusePort: true,
+		Handler:   s.DNSHandler(),
+	}
+	dnsTcpServer := dns.Server{
+		Addr:      dnsAddress.String(),
+		Net:       "tcp",
+		ReusePort: true,
+		Handler:   s.DNSHandler(),
+	}
+	if dnsProto == "tcp" {
+		go func() {
+			if err := dnsTcpServer.ListenAndServe(); err != nil {
+				dnsch <- err
+			}
+		}()
+	}
 
 	go func() {
 		if err := httpServer.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			httpch <- err
 		}
 	}()
+
 	go func() {
-		if err := dnsServer.ListenAndServe(); err != nil {
+		if err := dnsUdpServer.ListenAndServe(); err != nil {
 			dnsch <- err
 		}
 	}()
 
 	select {
 	case err = <-httpch:
-		dnsServer.ShutdownContext(ctx)
+		if dnsProto == "tcp" {
+			dnsTcpServer.ShutdownContext(ctx)
+		}
+		dnsUdpServer.ShutdownContext(ctx)
 		return Error{TypeInternalError, err, "fatal error on HTTP server"}
 	case err = <-dnsch:
 		httpServer.Shutdown(ctx)
 		return Error{TypeInternalError, err, "fatal error on DNS server"}
 	case <-ctx.Done():
-		dnsServer.ShutdownContext(ctx)
+		if dnsProto == "tcp" {
+			dnsTcpServer.ShutdownContext(ctx)
+		}
+		dnsUdpServer.ShutdownContext(ctx)
 		httpServer.Shutdown(ctx)
 		return nil
 	}

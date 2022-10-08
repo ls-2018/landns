@@ -54,7 +54,7 @@ func makeServer(args []string) (*service, error) {
 	etcdTimeout := app.Flag("etcd-timeout", "Timeout for etcd connection.").Default("100ms").Duration()
 	apiListen := app.Flag("api-listen", "Address for API and metrics.").Short('l').Default(":9353").TCP()
 	dnsListen := app.Flag("dns-listen", "Address for listen.").Short('L').Default(":53").TCP()
-	dnsProtocol := app.Flag("dns-protocol", "Protocol for listen.").Default("udp").Enum("udp", "tcp")
+	dnsProtocol := app.Flag("dns-protocol", "Protocol for listen.").Default("tcp").Enum("udp", "tcp")
 	upstreams := app.Flag("upstream", "Upstream DNS server for recursive resolve. (e.g. 8.8.8.8:53)").Short('u').PlaceHolder("ADDRESS").TCPList()
 	upstreamTimeout := app.Flag("upstream-timeout", "Timeout for recursive resolve.").Default("100ms").Duration()
 	cacheDisabled := app.Flag("disable-cache", "Disable cache for recursive resolve.").Bool()
